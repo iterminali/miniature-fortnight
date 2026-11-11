@@ -46,11 +46,63 @@ jobs:
       - name: Verify build
         run: |
           test -s sanity-check
-          echo "Sanity Check passed!"
+          echo "Build successful!"
 
-      - name: Upload build artifact
+      - name: Upload PR artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: Sanity-Check
           path: sanity-check
+
+      - name: Determine release tag
+        if: github.event_name != 'pull_request'
+        id: vars
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            TAG="sanity-check-${GITHUB_RUN_NUMBER}"
+            echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload tagged release
+        if: github.event_name != 'pull_request' && steps.vars.outputs.is_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.vars.outputs.tag_name }}
+        run: |
+          gh release upload "$TAG" sanity-check --clobber
+
+      - name: Create prerelease
+        if: github.event_name != 'pull_request' && steps.vars.outputs.is_release == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.vars.outputs.tag_name }}
+        run: |
+          gh release create "$TAG" sanity-check \
+            --target "$GITHUB_SHA" \
+            --title "Sanity Check $TAG" \
+            --prerelease \
+            --generate-notes
+
+      - name: Print release URL
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.vars.outputs.tag_name }}
+        run: |
+          URL=$(gh release view "$TAG" --json url --jq .url)
+
+          echo "=================================="
+          echo "SANITY CHECK RELEASE SUCCESSFUL"
+          echo "=================================="
+          echo "Release URL: $URL"
+          echo "=================================="
+
+          echo "RELEASE_URL=$URL" >> "$GITHUB_STEP_SUMMARY"
