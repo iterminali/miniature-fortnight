@@ -2,6 +2,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Starting Sanity Check build..."
+
+make clean
 make
-test -s hen.bin
-echo "Build successful: hen.bin"
+
+if [ ! -s sanity-check ]; then
+    echo "Build failed!"
+    exit 1
+fi
+
+echo "Build successful!"
