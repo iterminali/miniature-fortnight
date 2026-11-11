@@ -2,7 +2,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
 
-TARGET = sanity-check
+TARGET = payload.bin
 SOURCE = main.c
 
 .PHONY: all clean
