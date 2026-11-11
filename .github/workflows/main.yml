@@ -14,13 +14,14 @@ on:
       - "**/*.ini"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   payload-bin: payload.bin
 
 jobs:
   build:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
 
     steps:
@@ -29,16 +30,42 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Fix Docker container DNS
+      - name: Configure Docker DNS
+        run: |
+          sudo mkdir -p /etc/docker
+
+          echo '{"dns":["1.1.1.1","8.8.8.8"]}' \
+            | sudo tee /etc/docker/daemon.json
+
+          sudo systemctl restart docker
+          sleep 5
+
+          docker info
+          echo "Docker DNS configured."
+
       - name: Build with PS4 Payload SDK
         uses: Scene-Collective/ps4-payload-sdk@v1.0.0
         with:
           app_path: .
           build_command: bash build.sh
 
+      # Normalize output filename
       - name: Verify payload
-        run: test -s payload.bin
+        run: |
+          if [ -f hen.bin ]; then
+            mv hen.bin payload.bin
+          fi
 
-      - name: Upload payload artifact
+          if [ ! -s payload.bin ]; then
+            echo "ERROR: payload.bin was not generated"
+            ls -la
+            exit 1
+          fi
+
+          echo "Payload successfully generated."
+
+      - name: Upload PR artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
@@ -55,12 +82,15 @@ jobs:
             echo "tag_name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
           else
-            latest_tag=$(gh release view --json tagName --jq .tagName 2>/dev/null || echo "")
+            latest_tag=$(gh release view --json tagName \
+              --jq .tagName 2>/dev/null || echo "")
+
             if [ -z "$latest_tag" ]; then
               tag_name="pre-release-${GITHUB_REF##*/}-${GITHUB_RUN_NUMBER}"
             else
               tag_name="${latest_tag}-pre-release-${GITHUB_RUN_NUMBER}"
             fi
+
             echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
@@ -70,14 +100,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.vars.outputs.tag_name }}" payload.bin --clobber
+          gh release upload "${{ steps.vars.outputs.tag_name }}" \
+            payload.bin --clobber
 
       - name: Create pre-release
         if: github.event_name != 'pull_request' && steps.vars.outputs.is_release != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ steps.vars.outputs.tag_name }}" payload.bin \
+          gh release create "${{ steps.vars.outputs.tag_name }}" \
+            payload.bin \
             --target "${GITHUB_SHA}" \
             --title "${{ steps.vars.outputs.tag_name }}" \
             --prerelease \
