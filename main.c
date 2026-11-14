@@ -4,7 +4,8 @@
 int main(void)
 {
     printf("Hello From Webkit!\n");
-    printf("Webkit Payload Function Works Great!\n");
+    printf("Cheking")
+    printf("Permanent Jailbreak Kernel Bypass Getaway Works")
 
     return 0;
 }
