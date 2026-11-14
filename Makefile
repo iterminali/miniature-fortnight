@@ -1,9 +1,20 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2 -I$(PS4_PAYLOAD_SDK)/include
-LDFLAGS = -L$(PS4_PAYLOAD_SDK)/lib -T$(PS4_PAYLOAD_SDK)/linker.x -Wl,--build-id=none
+CC      = gcc
+PS4SDK ?= /lib/ps4-payload-sdk
 
-TARGET = payload.bin
-SOURCE = main.c
+CFLAGS  = -Wall -Wextra -O2 \
+          -I$(PS4SDK)/libPS4/include \
+          -nostartfiles -nostdlib -fno-builtin \
+          -masm=intel -march=btver2 -mtune=btver2 \
+          -m64 -mabi=sysv -mcmodel=small \
+          -fpie -fPIC
+
+LDFLAGS = -L$(PS4SDK)/libPS4 \
+          -T$(PS4SDK)/libPS4/linker.x \
+          -Wl,--build-id=none \
+          -lPS4
+
+TARGET  = payload.bin
+SOURCE  = main.c
 
 .PHONY: all clean
 
