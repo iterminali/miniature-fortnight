@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -9,6 +8,7 @@ make
 
 if [ ! -s payload.bin ]; then
     echo "ERROR: payload.bin was not generated"
+    ls -lah
     exit 1
 fi
 
