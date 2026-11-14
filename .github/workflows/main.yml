@@ -1,19 +1,16 @@
-
 name: "Sanity Check"
 
 on:
   push:
     paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
-      - "**/*.ini"
-
+      - "/*.md"
+      - "/.txt"
+      - "**/.ini"
   pull_request:
     paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
-      - "**/*.ini"
-
+      - "/*.md"
+      - "/.txt"
+      - "**/.ini"
   workflow_dispatch:
 
 permissions:
@@ -33,7 +30,6 @@ jobs:
         run: |
           echo '{"dns":["1.1.1.1","8.8.8.8"]}' \
             | sudo tee /etc/docker/daemon.json
-
           sudo systemctl restart docker
           sleep 5
 
@@ -50,7 +46,6 @@ jobs:
             ls -lah
             exit 1
           fi
-
           echo "payload.bin successfully generated!"
           ls -lh payload.bin
 
@@ -69,12 +64,10 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
-
             echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
           else
             TAG="sanity-check-${GITHUB_RUN_NUMBER}"
-
             echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
@@ -106,14 +99,12 @@ jobs:
           TAG: ${{ steps.vars.outputs.tag_name }}
         run: |
           URL=$(gh release view "$TAG" --json url --jq .url)
-
           echo "=================================="
           echo "SANITY CHECK RELEASE SUCCESSFUL"
           echo "=================================="
           echo "Release URL: $URL"
           echo "Download URL: $URL"
           echo "=================================="
-
           echo "## Build successful" >> "$GITHUB_STEP_SUMMARY"
           echo "[Open GitHub Release]($URL)" >> "$GITHUB_STEP_SUMMARY"
           echo "File: payload.bin" >> "$GITHUB_STEP_SUMMARY"
