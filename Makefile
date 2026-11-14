@@ -1,7 +1,7 @@
 CC      = gcc
 PS4SDK ?= /lib/ps4-payload-sdk
 
-CFLAGS  = -Wall -Wextra -O2 \
+CFLAGS  = -std=gnu11 -Wall -Wextra -O2 \
           -I$(PS4SDK)/libPS4/include \
           -nostartfiles -nostdlib -fno-builtin \
           -masm=intel -march=btver2 -mtune=btver2 \
