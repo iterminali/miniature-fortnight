@@ -5,12 +5,13 @@
 #define CUSA07022_DIR "/user/download/CUSA07022"
 #define CUSA07669_DIR "/user/download/CUSA07669"
 
+/*
+ * Notification helper using libPS4's SceNotificationRequest.
+ * The entire struct is zeroed first, then the message is copied.
+ */
 static void send_notify(const char *msg) {
     SceNotificationRequest req;
 
-    /* memset zeroes every field, including message[], uri[], unkstr[]
-       so the kernel sees a clean request. memset is a function pointer
-       exposed by libc.h — it must NOT be re-declared. */
     memset(&req, 0, sizeof(req));
 
     strncpy(req.message, msg, sizeof(req.message) - 1);
@@ -19,13 +20,6 @@ static void send_notify(const char *msg) {
     sceKernelSendNotificationRequest(0, &req, sizeof(req), 0);
 }
 
-/*
- * Deletes the Fortnite download cache files in the given directory.
- * Returns:
- *   1  -> at least one file deleted successfully
- *   0  -> files existed but deletion failed
- *  -1  -> neither file was found
- */
 static int delete_pair(const char *dir) {
     char dat[256];
     char info[256];
@@ -38,8 +32,6 @@ static int delete_pair(const char *dir) {
     strcpy(info, dir);
     strcat(info, "/download0_infomation.dat");
 
-    /* file_exists() and unlink() come from <file.h> in the SDK.
-       Do NOT use fopen/remove/access — they are glibc-only. */
     if (file_exists(dat)) {
         found = 1;
         if (unlink(dat) == 0) deleted++;
