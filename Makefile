@@ -15,13 +15,17 @@ LDFLAGS = -L$(PS4SDK)/libPS4 \
 
 TARGET  = payload.bin
 SOURCE  = main.c
+HEADERS = $(wildcard *.h)
 
-.PHONY: all clean
+.PHONY: all clean rebuild
 
 all: $(TARGET)
 
-$(TARGET): $(SOURCE)
+# Force rebuild whenever main.c or any local header changes
+$(TARGET): $(SOURCE) $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET) $(LDFLAGS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) *.o *.d
+
+rebuild: clean all
