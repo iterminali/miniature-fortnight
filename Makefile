@@ -21,7 +21,6 @@ HEADERS = $(wildcard *.h)
 
 all: $(TARGET)
 
-# Force rebuild whenever main.c or any local header changes
 $(TARGET): $(SOURCE) $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET) $(LDFLAGS)
 
