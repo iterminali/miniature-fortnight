@@ -36,9 +36,9 @@ jobs:
           sleep 5
 
       - name: Build with PS4 Payload SDK (14.02)
-        # ✅ FIXED: 'latest' is not a valid tag. The official README
-        # for Scene-Collective/ps4-payload-sdk specifies @v1.
-        uses: Scene-Collective/ps4-payload-sdk@v1
+        # ✅ FIX: 'v1' tag does not exist. Use 'main' to get the latest
+        # code, which includes the "Add 14.02 support" commit.
+        uses: Scene-Collective/ps4-payload-sdk@main
         with:
           app_path: .
           build_command: bash build.sh
@@ -86,8 +86,6 @@ jobs:
         run: |
           set -e
           if [ "$IS_REL" = "true" ]; then
-            # Real release triggered by pushing a tag.
-            # Create it if it doesn't exist, otherwise upload/overwrite.
             if gh release view "$TAG" >/dev/null 2>&1; then
               gh release upload "$TAG" payload.bin payload.sha256 --clobber
             else
@@ -97,7 +95,6 @@ jobs:
                 --generate-notes
             fi
           else
-            # Prerelease per run (uses run number, never collides).
             gh release create "$TAG" payload.bin payload.sha256 \
               --target "$GITHUB_SHA" \
               --title "Sanity Check $TAG" \
