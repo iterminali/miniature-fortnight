@@ -9,7 +9,7 @@ echo "=================================================="
 make clean
 rm -f payload.bin payload.sha256
 
-# Verify gcc exists in the SDK container
+# Verify gcc is available
 if [ ! -x "$(command -v gcc)" ]; then
     echo "ERROR: gcc not found in PATH"
     exit 1
@@ -23,14 +23,15 @@ if [ ! -s payload.bin ]; then
     exit 1
 fi
 
-# Sanity-check the payload is a real ELF (catches 0-byte / garbage output)
+# Sanity check the payload is a real ELF
 file payload.bin || true
 echo "Build successful:"
 ls -lh payload.bin
 
 # NOTE: intentionally NOT writing payload.sha256 here.
-# This script runs as root inside the SDK container — any file it
-# creates is root-owned and the host workflow can't overwrite it.
+# This script runs as root inside the SDK container. Any file
+# created here is root-owned and will cause "Permission denied"
+# on the host in the next workflow step.
 # The hash is generated on the host in the "Verify payload file" step.
 
 echo "=================================================="
