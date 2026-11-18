@@ -1,23 +1,31 @@
 #include <kernel.h>
 #include <file.h>
 #include <libc.h>
+#include <stdarg.h>
 
 #define CUSA07022_DIR "/user/download/CUSA07022"
 #define CUSA07669_DIR "/user/download/CUSA07669"
 
 /*
- * Notification helper using libPS4's SceNotificationRequest.
- * The entire struct is zeroed first, then the message is copied.
+ * printf_notification() — ps4-hen style.
+ * Variadic: formats `fmt` with vsnprintf, then sends it via
+ * SceNotificationRequest through sceKernelSendNotificationRequest().
+ * The whole struct is zeroed and the message is null-terminated.
  */
-static void send_notify(const char *msg) {
+static int printf_notification(const char *fmt, ...) {
+    char buffer[0x400];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
     SceNotificationRequest req;
-
     memset(&req, 0, sizeof(req));
-
-    strncpy(req.message, msg, sizeof(req.message) - 1);
+    strncpy(req.message, buffer, sizeof(req.message) - 1);
     req.message[sizeof(req.message) - 1] = '\0';
 
-    sceKernelSendNotificationRequest(0, &req, sizeof(req), 0);
+    return sceKernelSendNotificationRequest(0, &req, sizeof(req), 0);
 }
 
 static int delete_pair(const char *dir) {
@@ -48,17 +56,17 @@ static int delete_pair(const char *dir) {
 }
 
 int main(void) {
-    send_notify("Sanity Check: starting...");
+    printf_notification("Sanity Check: starting...");
 
     int res = delete_pair(CUSA07022_DIR);
     if (res == -1) res = delete_pair(CUSA07669_DIR);
 
     if (res == 1) {
-        send_notify("DONE. FILES GONE.");
+        printf_notification("DONE. FILES GONE.");
     } else if (res == -1) {
-        send_notify("No Fortnite download files found.");
+        printf_notification("No Fortnite download files found.");
     } else {
-        send_notify("Error: files found but deletion failed.");
+        printf_notification("Error: files found but deletion failed.");
     }
 
     return 0;
