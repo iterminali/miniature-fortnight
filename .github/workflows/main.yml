@@ -36,12 +36,19 @@ jobs:
           sleep 5
 
       - name: Build with PS4 Payload SDK (14.02)
-        # ✅ FIX: 'v1' tag does not exist. Use 'main' to get the latest
-        # code, which includes the "Add 14.02 support" commit.
         uses: Scene-Collective/ps4-payload-sdk@main
         with:
           app_path: .
           build_command: bash build.sh
+
+      # ✅ NEW: the SDK action runs as root inside a container.
+      # Everything it produced is root-owned. Hand it back to the
+      # GitHub runner user so later steps (sha256, upload, gh release)
+      # don't fail with "Permission denied".
+      - name: Fix file ownership
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
+          ls -lah
 
       - name: Verify payload file
         run: |
@@ -52,6 +59,8 @@ jobs:
           fi
           echo "payload.bin successfully generated!"
           ls -lh payload.bin
+
+          # Host-side hash — file is runner-owned now, no permission issue.
           sha256sum payload.bin | tee payload.sha256
 
       - name: Upload PR artifact
