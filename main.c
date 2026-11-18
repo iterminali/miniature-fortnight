@@ -71,9 +71,9 @@ int main(void) {
     }
 
     if (res == 1) {
-        send_notify("SPOOFED. FILES GONE. HWID CLEAN.");
+        send_notify("DONE. FILES GONE.");
     } else if (res == -1) {
-        send_notify("NIGGA DO YOU EVEN HAVE A HWID BAN OR FORTNITE.");
+        send_notify("NIGGA DO YOU EVEN HAVE A FILES OR FORTNITE.");
     } else {
         send_notify("FUCK U DID SOMETHING BECAUSE IT WENT FUCKING NIGGER BITCH WRONG");
     }
